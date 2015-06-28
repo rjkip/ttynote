@@ -47,7 +47,8 @@ const slideIndex = slideshowLength.
     scan(-1, (acc, { len, nav }) => {
         return clamp(acc + nav, -1, len-1);
     }).
-    combineLatest(Terminal.resizes(), slideIndex => slideIndex);
+    combineLatest(Terminal.resizes(), slideIndex => slideIndex).
+    distinctUntilChanged();
 const displayTitle = slideshow.combineLatest(slideIndex.filter(equals(-1)), slideshow => slideshow.metadata);
 const displaySlide = slideshow.combineLatest(
         slideIndex.filter(gte(0)),
