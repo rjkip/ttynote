@@ -7,31 +7,24 @@ export default {
     KEY_CTRL_C: '\u0003',
 
     keyPresses() {
-        let observers = [], stdin = process.stdin, readableListener, completeListener, errorListener;
-        return Rx.Observable.create(observer => {
-            if (observers.length === 0) {
-                stdin.setRawMode(true);
-                stdin.setEncoding('utf8');
-                stdin.addListener('readable', readableListener = () => {
-                    let chunk = stdin.read();
-                    if (chunk) observers.forEach(o => o.onNext(chunk));
-                });
-                stdin.addListener('end', completeListener = () => {
-                    observers.forEach(o => o.onCompleted());
-                });
-                stdin.addListener('close', completeListener);
-                stdin.addListener('error', errorListener = (error) => {
-                    observers.forEach(o => o.onError(error));
-                });
-            }
+        let stdin = process.stdin, readableListener, completeListener, errorListener;
 
-            observers.push(observer);
+        const keyPresses = Rx.Observable.create(observer => {
+            stdin.setRawMode(true);
+            stdin.setEncoding('utf8');
+            stdin.addListener('readable', readableListener = () => {
+                let chunk = stdin.read();
+                if (chunk) observer.onNext(chunk);
+            });
+            stdin.addListener('end', completeListener = () => {
+                observer.onCompleted();
+            });
+            stdin.addListener('close', completeListener);
+            stdin.addListener('error', errorListener = (error) => {
+                observer.onError(error);
+            });
 
             return Rx.Disposable.create(() => {
-                observers = observers.filter(o => o !== observer);
-
-                if (observers.length > 0) return;
-
                 stdin.removeListener('readable', readableListener);
                 stdin.removeListener('end', completeListener);
                 stdin.removeListener('close', completeListener);
@@ -40,6 +33,8 @@ export default {
                 stdin.unref();
             });
         });
+
+        return keyPresses.share();
     },
 
     resizes() {
