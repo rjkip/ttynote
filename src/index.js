@@ -69,4 +69,4 @@ displaySlide.
     takeUntil(exit).
     subscribe();
 
-exit.subscribe(process.exit);
+exit.delay(1000).subscribe(process.exit);
